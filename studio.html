@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>影视制作 · Qwen Station</title>
+<style>
+  :root { --bg:#f6f6f3; --panel:#fff; --line:#deded8; --text:#1d1d1b; --dim:#77776f; --accent:#2f6f5e; --soft:#f0efe9; --ok:#2f7d4f; --bad:#b9483d; --warn:#a56a12; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#191a1b; --panel:#222425; --line:#34373a; --text:#e7e6e1; --dim:#93948c; --accent:#6fbfa8; --soft:#2a2d2f; --ok:#6fc48f; --bad:#e08377; --warn:#d9a652; } }
+  * { box-sizing: border-box; } body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 "Segoe UI", "Microsoft YaHei", sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; } header a { color: var(--accent); text-decoration: none; font-size: 13px; }
+  main { max-width: 1240px; margin: 0 auto; padding: 16px 16px 240px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+  section.locked { opacity: .5; }
+  h2 { font-size: 16px; margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; } h2 small { font-weight: 400; color: var(--dim); font-size: 13px; }
+  .hint { color: var(--dim); font-size: 13px; margin: 0 0 10px; }
+  button, select, input, textarea { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+  button { cursor: pointer; } button.primary { background: var(--accent); border-color: var(--accent); color: #fff; } button:disabled { opacity: .45; cursor: default; }
+  button.small { padding: 2px 9px; font-size: 12.5px; }
+  textarea { width: 100%; resize: vertical; } .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .el { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .el .head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; } .el .head input { flex: 1; min-width: 140px; font-weight: 600; }
+  .imgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-top: 8px; }
+  .im { border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 5px; min-width: 0; background: var(--bg); }
+  .im img, .card video, #finalVideo, .lib img { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .im .ph { aspect-ratio: 16/9; border-radius: 6px; background: var(--soft); display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 12.5px; text-align: center; padding: 6px; }
+  label { font-size: 12px; color: var(--dim); }
+  .tag { font-size: 12px; border-radius: 10px; padding: 1px 9px; background: var(--soft); color: var(--dim); white-space: nowrap; }
+  .tag.ok { color: var(--ok); } .tag.bad { color: var(--bad); } .tag.warn { color: var(--warn); } .tag.k { color: var(--accent); }
+  .qa { font-size: 12.5px; color: var(--dim); white-space: pre-wrap; max-height: 150px; overflow: auto; background: var(--soft); border-radius: 6px; padding: 6px 8px; overflow-wrap: anywhere; }
+  details summary { cursor: pointer; font-size: 12.5px; color: var(--dim); }
+  #log { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--line); padding: 8px 16px; font: 12.5px/1.5 Consolas, "Microsoft YaHei", monospace; max-height: 170px; overflow: auto; white-space: pre-wrap; color: var(--dim); }
+  #new { display: none; } #new.open { display: block; } #new input[type=text], #new textarea { width: 100%; margin-bottom: 8px; }
+  .flag { color: var(--bad); } .pend { color: var(--warn); }
+  .scene { margin: 16px 0 8px; font-weight: 600; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  .shot { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .strip { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 8px; } .strip.two { grid-template-columns: 1fr 1.25fr; max-width: 760px; } .strip.one { grid-template-columns: minmax(0, 460px); } .kf { min-width: 0; } .kf img, .kf video { width: 100%; border-radius: 6px; background: #000; display: block; }
+  .kf .ph { aspect-ratio: 16/9; border-radius: 6px; background: var(--soft); display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 12.5px; }
+  .sae { display: grid; gap: 2px; font-size: 13.5px; margin-top: 8px; } .sae b { color: var(--accent); font-weight: 600; margin-right: 4px; }
+  @media (max-width: 720px) { .strip { grid-template-columns: 1fr 1fr; } .kf.wide { grid-column: 1 / -1; } }
+  .lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; } .lib figure { margin: 0; font-size: 12.5px; } .lib figcaption { color: var(--dim); margin-top: 3px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header>
+  <h1>影视制作</h1>
+  <select id="pick"></select>
+  <button id="newBtn">＋ 新的一集</button>
+  <span id="state" class="tag"></span>
+  <button id="stop" style="display:none">停止后续步骤</button>
+  <span style="flex:1"></span>
+  <a href="/">日常助手 →</a>
+</header>
+<main>
+  <section id="new">
+    <h2>新的一集</h2>
+    <div class="row" style="margin:0 0 8px"><label>所属剧集 <select id="nSeries"></select></label><input type="text" id="nSeriesName" placeholder="新剧集的名字" style="flex:1;min-width:200px;margin:0"></div>
+    <input type="text" id="nTitle" placeholder="本集标题">
+    <textarea id="nBrief" rows="8" placeholder="把这一集的小说原文贴在这里（也可以只写一段需求）。它会只改编你给的内容，不添加原文没有的情节。时长不用填，由内容决定。"></textarea>
+    <div class="row" id="nLook">
+      <label>画幅 <select id="nRatio"><option>16:9</option><option>9:16</option><option>1:1</option></select></label>
+      <label>视频分辨率 <select id="nRes"><option value="480P">480P（预览，快）</option><option value="768P" selected>768P（标准）</option><option value="1080P">1080P（增强，慢）</option></select></label>
+      <input type="text" id="nStyle" placeholder="全剧统一的视觉风格（可不填）" style="flex:1;min-width:200px;margin:0">
+    </div>
+    <p class="hint" id="nLocked" style="display:none;margin:8px 0 0"></p>
+    <div class="row"><span style="flex:1"></span><button class="primary" id="nGo">建立</button></div>
+  </section>
+
+  <div id="work" style="display:none">
+    <section id="s1">
+      <h2>① 剧本与内容 <small id="s1tag"></small></h2>
+      <p class="hint" id="brief"></p>
+      <details id="bibleBox" style="margin-bottom:8px"><summary>全剧设定（世界观、人物关系；每一集写剧本时都会带上）</summary><textarea id="bible" rows="4" placeholder="可不填。例如：故事发生在哪个年代的哪座城市；主要人物是谁、彼此什么关系；全剧的基调。"></textarea><div class="row" style="margin-top:6px"><button id="bSaveBible" class="small">保存全剧设定</button></div></details>
+      <textarea id="script" rows="16" placeholder="点“让 Qwen 写剧本”，或直接把你的剧本贴在这里"></textarea>
+      <div class="row"><button id="bScript">让 Qwen 写剧本</button><button id="bSaveScript">保存我的修改</button><span style="flex:1"></span><button class="primary" id="bElements">剧本确认，拆角色 / 场景 / 道具</button></div>
+    </section>
+
+    <section id="s2">
+      <h2>② 角色、场景、道具与参考图 <small id="s2tag"></small></h2>
+      <p class="hint"><b>人物</b>：每人一张四视图设定图（单张 9:16 的 2K 图：正面头部、侧面头部、正面全身、背面全身）。<b>场景</b>：先在“固定特征”里把空间和物品摆放定死，再按剧本用到的机位出 1 到 4 张。<b>道具</b>：不能打开的一张；能打开的两张（合上、打开）。补充图都以通过的主图为底图生成，所以要先确认主图，再点一次“生成图片”。资产库里已有的直接复用。每张图都要你确认，不想要的补充图请删掉；通过的图自动存入剧集资产库。</p>
+      <div id="els"></div>
+      <div class="row"><button id="bAddEl">＋ 加一个元素</button><button id="bSaveEls">保存我的修改</button><span style="flex:1"></span><button class="primary" id="bImages">生成图片</button></div>
+    </section>
+
+    <section id="s3">
+      <h2>③ 自动制作 <small id="s3tag"></small></h2>
+      <p class="hint">剧本和参考图你都确认之后，点一次“自动完成全片”，后面不用再管：它写分镜并由场记逐对检查前后是否接得上 → 按剧本给每个镜头选生成方式（建立镜头和换场用<b>参考生成</b>；进门、坐下这类位置关键的动作用<b>首尾帧</b>；不间断的长动作<b>续接上一镜</b>；交代气氛或时间的用<b>空镜</b>）→ 生成视频 → 配乐、合成。镜头之间一律硬切，不加转场效果。每一步没通过它自己检查的会自动重做一次。做完之后，哪一小段不满意，点那一段的“改这一段”写一句意见即可。</p>
+      <div id="shots"></div>
+      <div class="row"><button id="bPlan">只先写分镜给我看看（不占显卡）</button><span style="flex:1"></span><button class="primary" id="bAuto">剧本和图片都确认了，自动完成全片</button></div>
+    </section>
+
+    <section id="s4">
+      <h2>④ 成片 <small id="s4tag"></small></h2>
+      <p class="hint">自动制作的最后一步。改完某一小段后会沿用原来的配乐自动重新合成。声音它听不到，需要你亲自听。</p>
+      <div id="final"></div>
+      <div class="row"><span style="flex:1"></span><button id="bMusic">换一段配乐重新合成</button><button id="bFinal">重新合成</button></div>
+    </section>
+
+    <section id="s5">
+      <h2>剧集资产库 <small id="s5tag"></small></h2>
+      <p class="hint">这部剧所有通过确认的图都在这里，文件保存在工作区的 series 目录下。新的一集拆设定时会自动复用。</p>
+      <div id="library"></div>
+    </section>
+  </div>
+</main>
+<div id="log">还没有选片子。</div>
+<script>
+const $ = id => document.getElementById(id), esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let cur = null, S = null, dirty = false, workflows = ['F2K-9B-文生+图生'], lastKey = '', SERIES = [];
+const api = async (p, body) => { const r = await fetch(p, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || '请求失败'); return j; };
+const act = async (p, body) => { try { await api(p, Object.assign({ id: cur }, body)); dirty = false; lastKey = ''; await refresh(); } catch (e) { alert(e.message); } };
+const STATUS = { draft: ['待生成', ''], generating: ['生成中…', 'warn'], review: ['等你确认', 'warn'], approved: ['已通过', 'ok'], rejected: ['不通过，待重做', 'bad'], failed: ['生成失败', 'bad'] };
+const tag = s => `<span class="tag ${(STATUS[s] || ['', ''])[1]}">${(STATUS[s] || [s])[0]}</span>`;
+const vtag = v => v ? `<span class="tag ${v === '合格' ? 'ok' : v === '不合格' ? 'bad' : ''}">它的检查：${v}</span>` : '';
+const PRESET = { 角色: ['另一个造型…（换装、淋湿、受伤）'], 道具: ['打开', '撑开', '展开'], 场景: ['另一个机位或区域…'] };
+const MODE = { t2i: '文生图', quad: '四视图设定图（单张 9:16，2K）', i2i: '以主图为底图', angle: '多角度（转动相机）', threeview: '三视图表' };
+const todo = im => ['draft', 'rejected', 'failed'].includes(im.status);
+const M = { ref: '参考生成', fl: '首尾帧', cont: '续接上一镜', t2v: '空镜' };
+
+async function list() {
+  const l = await api('/api/studio/list'); SERIES = l.series;
+  $('pick').innerHTML = '<option value="">选择一集…</option>' + l.series.map(s => `<optgroup label="${esc(s.name)}（${s.assets} 个资产）">` + l.productions.filter(x => x.series === s.id).map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('') + '</optgroup>').join('') + (l.productions.some(x => !x.series) ? '<optgroup label="早期的单片">' + l.productions.filter(x => !x.series).map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('') + '</optgroup>' : '');
+  if (cur) $('pick').value = cur;
+  $('nSeries').innerHTML = '<option value="">＋ 新建剧集</option>' + l.series.map(s => `<option value="${esc(s.id)}">${esc(s.name)}（已有 ${s.episodes} 集）</option>`).join(''); seriesPick();
+}
+function seriesPick() { const s = SERIES.find(x => x.id === $('nSeries').value); $('nSeriesName').style.display = $('nLook').style.display = s ? 'none' : ''; $('nLocked').style.display = s ? '' : 'none'; if (s) $('nLocked').textContent = `沿用《${s.name}》的设定：${s.ratio}　｜　${s.resolution}　｜　${s.style || '未填风格'}　｜　资产库 ${s.assets} 个元素会自动复用`; }
+function planSvg(L) {   // 按坐标画平面图：程序画的，同一份锁定表每次画出来都一样
+  const k = 340 / Math.max(L.w, 0.1), W = L.w * k, D = L.d * k, c = L.camera, v = { 东: [1, 0], 西: [-1, 0], 南: [0, 1], 北: [0, -1], 东北: [.7, -.7], 东南: [.7, .7], 西北: [-.7, -.7], 西南: [-.7, .7] }[c.facing] || [0, 0];
+  return `<svg viewBox="-24 -24 ${W + 48} ${D + 48}" style="width:100%;max-width:400px;background:#eef2f4;border-radius:6px" font-size="11" font-family="sans-serif"><rect x="0" y="0" width="${W}" height="${D}" fill="#f7f5ee" stroke="#17212b" stroke-width="2.5"/>${L.items.map(i => { const x = i.x1 * k, y = i.y1 * k, w = Math.max((i.x2 - i.x1) * k, 5), h = Math.max((i.y2 - i.y1) * k, 5), thin = /门|窗/.test(i.name); return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${thin ? '#9fd0dc' : '#c9cdd1'}" stroke="#4b5560"/><text x="${x + w / 2}" y="${y + h / 2 + 4}" text-anchor="middle" fill="#17212b">${esc(i.name)}</text>`; }).join('')}<line x1="${c.x * k}" y1="${c.y * k}" x2="${c.x * k + v[0] * 34}" y2="${c.y * k + v[1] * 34}" stroke="#c0392b" stroke-width="2.5"/><circle cx="${c.x * k}" cy="${c.y * k}" r="5" fill="#c0392b"/><text x="${c.x * k + 8}" y="${c.y * k - 8}" fill="#c0392b">机位</text><text x="${W / 2}" y="-8" text-anchor="middle" fill="#4b5560">↑ 远处　${L.w} m × ${L.d} m　机位在下方</text></svg>`;
+}
+function collectEls() { return [...document.querySelectorAll('#els .el')].map(c => ({ id: c.dataset.id, name: c.querySelector('.n').value, description: c.querySelector('.d').value, layout: (t => { if (!t) return undefined; try { return JSON.parse(t.value); } catch (e) { throw new Error('“' + c.querySelector('.n').value + '”的空间锁定表不是合法的 JSON，改好再保存'); } })(c.querySelector('.lay')), images: [...c.querySelectorAll('.im')].map(m => ({ id: m.dataset.id, prompt: (m.querySelector('.p') || {}).value, workflow: (m.querySelector('.w') || {}).value })) })); }
+function render() {
+  const busy = S.running || S.busyElsewhere, els = S.elements || [], shots = S.shots || [], imgs = els.flatMap(e => e.images), SI = S.seriesInfo;
+  const find = r => { const e = els.find(x => x.id === r.el); const im = e && (e.images.find(i => i.id === r.img) || e.images[0]); return e ? `${e.name}·${im.label}` : '?'; };
+  $('state').textContent = S.running ? '正在进行：' + ({ script: '写剧本', elements: '拆设定', images: '生成图片', videos: '制作视频', final: '合成成片' }[S.action] || S.action) : S.busyElsewhere ? '日常助手正在对话' : '空闲';
+  $('state').className = 'tag' + (S.running ? ' warn' : ''); $('stop').style.display = S.running ? '' : 'none';
+  $('brief').textContent = `需求：${S.brief}　｜　${S.ratio}　｜　${S.resolution || '768P'}` + (shots.length ? `　｜　${shots.length} 个镜头，约 ${shots.reduce((a, s) => a + s.seconds, 0)} 秒` : '　｜　时长由剧本的镜头数决定') + (S.style ? `　｜　${S.style}` : '') + (S.project ? `　｜　工作台项目：${S.project}` : '');
+  $('bibleBox').style.display = SI ? '' : 'none'; if (SI) $('bible').value = SI.bible;
+  $('script').value = (S.script || {}).text || ''; $('s1tag').textContent = S.script ? (S.script.confirmed ? '已确认' : '待你确认') + ((S.script.added || []).length ? `｜注意：原文里没有 ${S.script.added.join('、')}` : '') : '还没有剧本';
+  $('els').innerHTML = els.map(e => { const m = e.images[0]; return `<div class="el" data-id="${e.id}" data-kind="${e.kind}">
+    <div class="head"><span class="tag k">${e.kind}</span><input type="text" class="n" value="${esc(e.name)}">${e.lib && m.fromLibrary ? '<span class="tag ok">来自资产库</span>' : ''}<button class="small" data-addimg="1" ${m.fromLibrary || m.status === 'approved' || true ? '' : 'disabled'}>＋ 补一张图</button>${!e.images.some(i => i.nodeId) ? '<button class="small" data-rmel="1">删除元素</button>' : ''}</div>
+    <label>固定特征（中文，之后每个镜头都按它保持一致）</label><textarea class="d" rows="2">${esc(e.description)}</textarea>${e.kind === '场景' && e.layout ? `<div class="row" style="align-items:flex-start;gap:12px;margin:6px 0"><div style="flex:0 0 400px;max-width:100%">${planSvg(e.layout)}</div><div style="flex:1;min-width:220px;font-size:13px"><b>空间锁定</b>（之后所有镜头都按这张平面图）${(e.layout.warn || []).length ? `<div style="color:#c0392b;margin:4px 0"><b>需要你改的：</b>${esc(e.layout.warn.join('；'))}</div>` : ''}<br>光线：${esc(e.layout.light || '—')}<br><b>主机位看到的</b>（程序按坐标算的）<br>左：${esc(e.layout.camera.left || '—')}<br>中：${esc(e.layout.camera.center || '—')}<br>右：${esc(e.layout.camera.right || '—')}<details><summary>改坐标（单位米；x 从画面左墙到右墙，y 从远墙到机位这边）</summary><textarea class="lay" rows="8">${esc(JSON.stringify(e.layout, null, 1))}</textarea><span class="hint" style="margin:0">改完点“保存修改”，平面图会跟着变。改了布局记得把主图重做。</span></details></div></div>` : ''}
+    <div class="imgs">${e.images.map((im, k) => `<div class="im" data-id="${im.id}">
+      <div class="row" style="margin:0"><b>${esc(im.label)}</b>${tag(im.status)}${vtag(im.verdict)}</div>
+      ${im.url ? `<a href="${esc(im.url)}" target="_blank"><img src="${esc(im.url)}" loading="lazy" alt="${esc(e.name + ' ' + im.label)}"></a>` : `<div class="ph">${k && e.images[0].status !== 'approved' ? '等主图通过后生成' : '还没生成'}<br>${MODE[im.mode] || ''}</div>`}
+      ${im.fromLibrary ? '' : im.mode === 'angle' || im.mode === 'threeview' ? `<span class="hint" style="margin:0">${MODE[im.mode]}，自动生成，不用写提示词</span>` : `<details ${im.prompt ? '' : 'open'}><summary>出图提示词</summary><textarea class="p" rows="4" placeholder="${k ? '英文：the same … as in the reference image, …' : '英文出图提示词'}">${esc(im.prompt)}</textarea>${k ? '' : `<select class="w" style="width:100%;margin-top:4px">${[...new Set(workflows.concat(im.workflow))].map(w => `<option${w === im.workflow ? ' selected' : ''}>${esc(w)}</option>`).join('')}</select>`}</details>`}
+      ${im.qa ? `<details><summary>它看图后的检查意见</summary><div class="qa">${esc(im.qa)}</div></details>` : ''}
+      <div class="row" style="margin-top:2px">${im.url && !im.fromLibrary ? `<button class="primary small" data-mark="approved" ${im.status === 'approved' ? 'disabled' : ''}>通过</button><button class="small" data-mark="rejected">不通过，重做</button>` : ''}${im.fromLibrary ? '' : '<button class="small" data-up="1" title="在别处做好的图（比如按平面图出的场景图）可以直接放进来">用我自己的图</button>'}${k && !im.fromLibrary ? '<button class="small" data-rmimg="1">删除</button>' : ''}</div></div>`).join('')}</div></div>`; }).join('') || '<p class="hint">剧本确认后，这里会列出需要的角色、场景和道具。</p>';
+  $('s2tag').textContent = imgs.length ? `${els.length} 个元素，${imgs.filter(i => i.status === 'approved').length} / ${imgs.length} 张图已通过` : '';
+  const frame = (f, name) => !f ? '' : `<div class="kf"><label>${name}${f.verdict ? ` · ${f.verdict}` : ''}</label>${f.url ? `<a href="${esc(f.url)}" target="_blank"><img src="${esc(f.url)}" loading="lazy" alt="${name}"></a>` : `<div class="ph">${f.status === 'generating' ? '生成中…' : '还没生成'}</div>`}</div>`;
+  let lastScene = null;
+  $('shots').innerHTML = shots.map(s => { const head = s.kf && s.scene !== lastScene ? `<p class="scene">第 ${s.scene} 场</p>` : ''; lastScene = s.scene; return head + `<div class="shot" data-id="${s.id}">
+    <div class="row" style="margin:0 0 6px"><b>${esc(s.title)}</b>${s.method ? `<span class="tag k" title="${esc(s.why || '')}">${M[s.method] || s.method}</span>` : ''}${s.size ? `<span class="tag">${esc(s.size)}</span>` : ''}<span class="tag">${s.seconds} 秒</span>${s.url ? vtag(s.verdict) : tag(s.status)}${s.retried ? '<span class="tag">自动重做过</span>' : ''}<span style="flex:1"></span>${s.kf ? '<button class="small" data-redo="1">改这一段</button>' : ''}</div>
+    ${s.kf ? `<div class="strip${s.method === 'fl' ? '' : s.method === 'cont' ? ' two' : ' one'}">${s.method === 'fl' ? frame(s.kf.first, '首帧') + frame(s.kf.last, '尾帧') : s.method === 'cont' ? frame(s.kf.first || { status: 'draft' }, '首帧（上一镜的最后一帧）') : ''}<div class="kf wide"><label>视频</label>${s.url ? `<video src="${esc(s.url)}" controls preload="metadata"></video>` : `<div class="ph">${s.status === 'generating' ? '生成中…' : '还没生成'}</div>`}</div></div>
+    <div class="sae"><span><b>起始</b> ${esc(s.start)}</span><span><b>动作</b> ${esc(s.action)}</span><span><b>结束</b> ${esc(s.end)}</span>${s.purpose ? `<span class="hint" style="margin:0"><b>观众新知道了</b> ${esc(s.purpose)}</span>` : ''}${s.why ? `<span class="hint" style="margin:0"><b>为什么用${M[s.method] || ''}</b> ${esc(s.why)}</span>` : ''}</div>` : `${s.url ? `<video src="${esc(s.url)}" controls preload="metadata" style="max-width:420px"></video>` : ''}<div style="font-size:13.5px">${esc(s.description || '')}</div><p class="hint">这是旧流程做的镜头。点“只先写分镜”会按新流程重新规划。</p>`}
+    <div class="hint" style="margin:4px 0 0">用到的图：${s.refs.map(r => esc(find(r))).join('、')}${s.angle ? `　｜　机位：${esc(s.angle)}` : ''}</div>
+    ${s.kf && (s.kf.first.qa || s.kf.last.qa) ? `<details><summary>首尾帧的检查意见</summary><div class="qa">【首帧】${esc(s.kf.first.qa || '')}\n\n【尾帧】${esc(s.kf.last.qa || '')}</div></details>` : ''}
+    ${s.check ? `<details><summary>视频技术质检</summary><div class="qa">${esc(s.check)}</div></details>` : ''}
+    ${s.qa ? `<details><summary>视频的检查意见</summary><div class="qa">${esc(s.qa)}</div></details>` : ''}</div>`; }).join('') || '<p class="hint">还没有分镜。</p>';
+  const done = shots.filter(s => s.url).length;
+  $('s3tag').textContent = shots.length ? `${new Set(shots.map(s => s.scene)).size} 场 ${shots.length} 个镜头，${done} 个已生成，其中 ${shots.filter(s => s.url && s.verdict === '合格').length} 个通过检查` : '';
+  const f = S.final;
+  $('final').innerHTML = !f ? '<p class="hint">还没有成片。</p>' : f.status === 'working' ? '<p class="hint">正在合成…</p>' : f.status === 'failed' ? '<p class="flag">合成没有完成，见下方进度记录。</p>' : `
+    <video id="finalVideo" src="${esc(f.url)}" controls style="max-width:820px"></video>
+    <p><b>验收结论：${f.status === 'UNVERIFIED' ? '待你确认（UNVERIFIED）' : '未通过（NOT PASSED）'}</b></p>
+    ${(f.flags || []).map(x => `<div class="flag">✗ ${esc(x)}</div>`).join('')}${(f.pending || []).map(x => `<div class="pend">？ ${esc(x)}</div>`).join('')}
+    <p class="hint">成片文件：${esc(f.path)}${f.sheet ? `　｜　<a href="${esc(f.sheet)}" target="_blank">接触表</a>` : ''}</p>
+    <details><summary>媒体属性与指纹</summary><div class="qa">${esc(f.probe)}</div></details>
+    <details><summary>技术质检</summary><div class="qa">${esc(f.check)}</div></details>
+    <details><summary>它看成片后的检查意见</summary><div class="qa">${esc(f.qa)}</div></details>
+    <details><summary>配乐提示词</summary><div class="qa">${esc(f.music)}</div></details>`;
+  $('s4tag').textContent = f && f.status !== 'working' ? f.status : '';
+  $('s5').style.display = SI ? '' : 'none';
+  if (SI) { $('s5tag').textContent = `《${SI.name}》｜${SI.assets.length} 个元素｜已完成 ${SI.episodes.length} 集`; $('library').innerHTML = (SI.assets.length ? ['角色', '场景', '道具'].map(k => { const a = SI.assets.filter(x => x.kind === k); return a.length ? `<p style="margin:10px 0 6px"><b>${k}</b></p><div class="lib">${a.flatMap(x => x.images.map(i => `<figure><a href="${esc(i.url)}" target="_blank"><img src="${esc(i.url)}" loading="lazy" alt="${esc(x.name + ' ' + i.label)}"></a><figcaption>${esc(x.name)} · ${esc(i.label)}</figcaption></figure>`)).join('')}</div>` : ''; }).join('') : '<p class="hint">还没有入库的图。图片点“通过”后会出现在这里。</p>') + (SI.episodes.length ? '<p style="margin:14px 0 4px"><b>分集概要</b></p>' + SI.episodes.map(e => `<div class="hint" style="margin:0 0 4px">第 ${e.n} 集《${esc(e.title)}》：${esc(e.summary)}</div>`).join('') : ''); }
+  const allEl = imgs.length && imgs.every(i => i.status === 'approved'), allSh = shots.filter(s => s.url).length >= 2;
+  const ready = els.flatMap(e => e.images.filter((im, k) => todo(im) && (k === 0 || e.images[0].status === 'approved'))).length;
+  $('s2').className = S.script ? '' : 'locked'; $('s3').className = els.length ? '' : 'locked'; $('s4').className = allSh ? '' : 'locked';
+  $('bScript').disabled = $('bSaveScript').disabled = busy; $('bElements').disabled = busy || !S.script;
+  $('bImages').disabled = busy || !ready; $('bImages').textContent = ready ? `生成图片（${ready} 张可以生成）` : '生成图片'; $('bAddEl').disabled = $('bSaveEls').disabled = busy || !S.script;
+  const hasNew = shots.some(s => s.kf), unfinished = shots.some(s => s.kf && !s.url);
+  $('bPlan').disabled = busy || !els.length; $('bPlan').textContent = hasNew ? '重新写分镜（会丢弃现有镜头）' : '只先写分镜给我看看（不占显卡）';
+  $('bAuto').disabled = busy || !allEl; $('bAuto').textContent = !hasNew ? '剧本和图片都确认了，自动完成全片' : unfinished ? '继续自动完成剩下的部分' : '全部已完成（再点会重新合成）';
+  $('bFinal').disabled = $('bMusic').disabled = busy || !allSh;
+  document.querySelectorAll('#els button, #shots button').forEach(b => { if (busy) b.disabled = true; });
+}
+async function refresh(force) {
+  if (!cur) return; let s; try { s = await api('/api/studio/state?id=' + encodeURIComponent(cur)); } catch (e) { return; }
+  $('log').innerHTML = (s.log || []).map(esc).join('\n') || '还没有进度记录。'; $('log').scrollTop = $('log').scrollHeight;
+  const key = s.updatedAt + '|' + s.running + '|' + s.busyElsewhere + '|' + ((s.seriesInfo || {}).assets || []).reduce((a, x) => a + x.images.length, 0); S = s;
+  if ((key !== lastKey && !dirty) || force) { lastKey = key; render(); }
+}
+async function open(id) { cur = id; dirty = false; lastKey = ''; $('work').style.display = id ? '' : 'none'; $('new').classList.remove('open'); try { workflows = (await api('/api/studio/workflows')).image; } catch (e) {} await refresh(true); }
+const saveEls = () => api('/api/studio/save', { id: cur, elements: collectEls() });
+
+$('pick').onchange = e => open(e.target.value);
+$('newBtn').onclick = () => $('new').classList.toggle('open'); $('nSeries').onchange = seriesPick;
+$('nGo').onclick = async () => { try { const r = await api('/api/studio/new', { series: $('nSeries').value, seriesName: $('nSeriesName').value, title: $('nTitle').value, brief: $('nBrief').value, resolution: $('nRes').value, ratio: $('nRatio').value, style: $('nStyle').value }); await list(); $('pick').value = r.id; open(r.id); } catch (e) { alert(e.message); } };
+$('stop').onclick = () => act('/api/studio/stop', {});
+document.addEventListener('input', e => { if (e.target.closest('#work')) dirty = true; });
+$('bScript').onclick = () => { if (!$('script').value.trim() || confirm('重新写会覆盖现在的剧本，继续吗？')) act('/api/studio/run', { action: 'script' }); };
+$('bSaveScript').onclick = () => act('/api/studio/save', { script: $('script').value });
+$('bSaveBible').onclick = () => act('/api/studio/save', { bible: $('bible').value });
+$('bElements').onclick = async () => { if ((S.elements || []).some(e => e.images[0].status !== 'approved') && !confirm('会重新拆一遍设定：主图已通过的元素保留，其余的会被替换。继续吗？')) return; await api('/api/studio/save', { id: cur, script: $('script').value }).catch(() => {}); act('/api/studio/run', { action: 'elements' }); };
+$('bSaveEls').onclick = () => { let els; try { els = collectEls(); } catch (e) { return alert(e.message); } act('/api/studio/save', { elements: els }); };
+$('bAddEl').onclick = async () => { const kind = prompt('要加的是：角色、场景，还是道具？', '道具'); if (!kind) return; const name = prompt('名字？'); if (!name) return; await saveEls().catch(() => {}); act('/api/studio/save', { addElement: { kind, name } }); };
+$('bImages').onclick = async () => { try { await saveEls(); } catch (e) { return alert(e.message); } const s = await api('/api/studio/state?id=' + encodeURIComponent(cur)); const n = s.elements.flatMap(e => e.images.filter((im, k) => todo(im) && (k === 0 || e.images[0].status === 'approved'))).length; if (confirm(`将向 ComfyUI 提交 ${n} 张图片。期间本地模型会暂时卸载让出显卡。确定吗？`)) act('/api/studio/run', { action: 'images' }); };
+$('bPlan').onclick = () => { if (!(S.shots || []).length || confirm('会丢弃现在所有的镜头和成片，按剧本重新写分镜。确定吗？')) act('/api/studio/run', { action: 'plan' }); };
+$('bAuto').onclick = () => { const n = (S.shots || []).filter(s => s.kf).length, fl = (S.shots || []).filter(s => s.method === 'fl').length, est = n ? `共 ${n} 个镜头（其中 ${fl} 个要先出首尾帧），按实测估算大约需要 ${Math.round(n * 6 + fl * 4.5 + 5)} 分钟（含自动检查；没通过检查的镜头不自动重做，留给你用“改这一段”处理）` : '镜头数由剧本决定；按实测，每个镜头连检查大约 6 到 11 分钟'; if (confirm(`将自动完成：分镜 → 首尾帧 → 视频 → 配乐合成，中间不再问你。\n${est}。期间本地模型会反复卸载和加载。\n可以随时点右上角“停止后续步骤”。确定开始吗？`)) act('/api/studio/run', { action: 'auto' }); };
+$('bFinal').onclick = () => act('/api/studio/run', { action: 'final' });
+$('bMusic').onclick = () => { if (confirm('会重新生成一段配乐（占用显卡约一分钟）并重新合成。确定吗？')) act('/api/studio/run', { action: 'final', newMusic: true }); };
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-mark],[data-rmimg],[data-rmel],[data-addimg],[data-redo],[data-up]'); if (!b || !S) return;
+  if (b.dataset.redo) {   // 改一小段：写一句意见，它重做这一段的首尾帧和视频，并重新合成
+    const comment = prompt('这一段哪里不对？写一句话，例如“她应该从画面左边走进来”“伞要一直拿在右手”。留空就是原样重做一遍。\n会占用显卡大约 6 到 8 分钟。', ''); if (comment === null) return;
+    return act('/api/studio/run', { action: 'redo', target: b.closest('.shot').dataset.id, comment });
+  }
+  const el = b.closest('.el'), im = b.closest('.im'), shot = null;
+  if (b.dataset.up) { const f = document.createElement('input'); f.type = 'file'; f.accept = 'image/png,image/jpeg,image/webp'; f.onchange = () => { const r = new FileReader(); r.onload = () => act('/api/studio/upload', { target: im.dataset.id, data: r.result }); r.readAsDataURL(f.files[0]); }; return f.click(); }
+  if (el && dirty) { try { await saveEls(); } catch (err) { return alert(err.message); } }
+  if (b.dataset.rmel) return confirm('删除这个元素？') && act('/api/studio/save', { removeElement: el.dataset.id });
+  if (b.dataset.rmimg) return act('/api/studio/save', { removeImage: im.dataset.id });
+  if (b.dataset.addimg) {
+    const kind = el.dataset.kind, opts = PRESET[kind]; let label = prompt(`给这个${kind}补一张什么图？可以直接输入名字，或从这些里选：\n${opts.join('、')}`, opts[0].replace('…', '')); if (!label) return; label = label.replace('…', '').trim();
+    label = label.replace(/（.*$/, '').trim() || '新造型'; let text = ''; { text = prompt(`用一句话说明这张“${label}”要什么（中文英文都可以，它会以主图为底图生成）：`, kind === '道具' ? 'the same object as in the reference image, now ' : kind === '场景' ? 'the same location as in the reference image, seen from ' : '同一个人、同样的四视图版式，只改变：'); if (text === null) return; }
+    return act('/api/studio/save', { addImage: { el: el.dataset.id, label, prompt: text } });
+  }
+  const kind = shot ? 'shot' : 'image', target = shot ? shot.dataset.id : im.dataset.id;
+  const it = shot ? S.shots.find(x => x.id === target) : S.elements.flatMap(x => x.images).find(x => x.id === target);
+  if (b.dataset.mark === 'approved') {
+    if (it && it.verdict === '不合格' && !confirm('它自己检查后判的是“不合格”（展开检查意见可以看原因）。确定仍然要通过吗？参考图有问题的话，后面每个镜头、每一集都会跟着错。')) return;
+    return act('/api/studio/mark', { kind, target, status: 'approved' });
+  }
+  const comment = prompt('哪里不对？写下来，它会按这个意见改提示词后重做（留空则原样重做）：', ''); if (comment === null) return;
+  try { await api('/api/studio/mark', { id: cur, kind, target, status: 'rejected', comment }); } catch (err) { return alert(err.message); }
+  if (confirm('现在就重做这一个吗？会占用显卡。')) act('/api/studio/run', { action: shot ? 'videos' : 'images', target }); else { lastKey = ''; refresh(); }
+});
+list(); setInterval(refresh, 2500);
+</script>
+</body>
+</html>

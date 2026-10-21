@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qwen Station</title>
+<style>
+  :root { --bg:#f6f6f3; --panel:#fff; --line:#deded8; --text:#1d1d1b; --dim:#77776f; --accent:#2f6f5e; --tool:#f0efe9; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#191a1b; --panel:#222425; --line:#34373a; --text:#e7e6e1; --dim:#93948c; --accent:#6fbfa8; --tool:#2a2d2f; } }
+  * { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+  body { display: flex; background: var(--bg); color: var(--text); font: 15px/1.65 "Segoe UI", "Microsoft YaHei", sans-serif; }
+  aside { width: 230px; flex: none; border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; }
+  aside h1 { font-size: 15px; margin: 0; padding: 14px 16px 6px; }
+  #status { padding: 0 16px 10px; font-size: 12px; color: var(--dim); white-space: pre-line; border-bottom: 1px solid var(--line); }
+  #sessions { flex: 1; overflow: auto; padding: 6px; }
+  .s { padding: 7px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+  .s:hover, .s.on { background: var(--tool); }
+  button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #new { margin: 8px; }
+  main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #log { flex: 1; overflow: auto; padding: 20px max(16px, calc(50% - 400px)); }
+  .m { margin: 0 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .user { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 13px; }
+  .tool { font: 12px/1.5 Consolas, monospace; background: var(--tool); border-radius: 6px; padding: 6px 10px; color: var(--dim); max-height: 130px; overflow: auto; }
+  .confirm { border: 1px solid var(--accent); border-radius: 8px; padding: 12px 14px; background: var(--panel); }
+  .confirm h2 { font-size: 14px; margin: 0 0 6px; } .confirm .btns { display: flex; gap: 8px; margin-top: 10px; align-items: center; white-space: normal; }
+  .confirm button:disabled { opacity: .45; cursor: default; }
+  .note { color: var(--dim); font-size: 13px; } .error { color: #c0453a; }
+  #tok { padding: 6px max(16px, calc(50% - 400px)); font: 12px/1.5 Consolas, "Microsoft YaHei", monospace; color: var(--dim); border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  #tok b { color: var(--accent); font-weight: 600; }
+  form { display: flex; gap: 8px; padding: 8px max(16px, calc(50% - 400px)) 16px; }
+  textarea { flex: 1; resize: none; height: 62px; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
+  @media (max-width: 640px) { aside { display: none; } }
+</style>
+</head>
+<body>
+<aside>
+  <h1>Qwen Station · 日常助手</h1>
+  <div id="status">连接中…</div>
+  <a href="/studio" style="margin:8px 8px 0;padding:7px 12px;border-radius:6px;background:var(--tool);color:var(--accent);text-decoration:none;font-size:13px;text-align:center">影视制作 →</a>
+  <button id="new">＋ 新对话</button>
+  <div id="sessions"></div>
+</aside>
+<main>
+  <div id="log"></div>
+  <div id="tok">本次 输入 – · 输出 –　｜　会话累计 输入 – · 输出 –　｜　上下文 –</div>
+  <form id="f"><textarea id="t" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea><button class="primary" id="go">发送</button></form>
+</main>
+<script>
+const $ = id => document.getElementById(id), log = $('log');
+let session = null, running = false;
+// token 显示：输出数在生成过程中实时跳动；输入数和缓存命中数在每一步结束时由模型服务给出准确值
+const T = { input: 0, output: 0, cached: 0, tps: 0, totalIn: 0, totalOut: 0, context: 0, window: 0, live: false }, fmt = n => Number(n || 0).toLocaleString('en-US');
+function tok() {
+  $('tok').innerHTML = `本次 输入 <b>${fmt(T.input)}</b>${T.cached ? `（缓存命中 ${fmt(T.cached)}）` : ''} · 输出 <b>${fmt(T.output)}</b>${T.live ? ' ▍' : T.tps ? `（${T.tps.toFixed(1)} token/秒）` : ''}　｜　会话累计 输入 ${fmt(T.totalIn)} · 输出 ${fmt(T.totalOut)}　｜　上下文 ${fmt(T.context)}${T.window ? ` / ${fmt(T.window)}（${(T.context / T.window * 100).toFixed(1)}%）` : ''}`;
+}
+function add(cls, text) { const d = document.createElement('div'); d.className = 'm ' + cls; d.textContent = text; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; }
+// 需要你本人确认的操作：只有点了“允许”才会执行，每次都要重新确认
+function confirmCard(ev) {
+  const d = add('confirm', ''); d.id = 'c-' + ev.id;
+  const h = document.createElement('h2'); h.textContent = '需要你确认：' + ev.tool; const body = document.createElement('div'); body.textContent = ev.text;
+  const btns = document.createElement('div'); btns.className = 'btns'; const r = document.createElement('span'); r.className = 'r note';
+  for (const [label, ok] of [['允许', true], ['拒绝', false]]) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (ok) b.className = 'primary';
+    b.onclick = () => { btns.querySelectorAll('button').forEach(x => x.disabled = true); fetch('/api/confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ev.id, ok }) }); };
+    btns.appendChild(b);
+  }
+  btns.appendChild(r); d.append(h, body, btns); log.scrollTop = log.scrollHeight;
+}
+async function status() {
+  try {
+    const s = await (await fetch('/api/status')).json();
+    const comfy = Object.entries(s.comfy).map(([p, q]) => p + (q ? `：运行 ${q.running} 排队 ${q.pending}` : '：未运行')).join('，');
+    $('status').textContent = `${s.model}\n模型：${s.modelReady ? '就绪' : '未启动'}${s.busy ? '（忙）' : ''}\nComfyUI ${comfy}\n工具 ${s.tools.length} 个`;
+  } catch (e) { $('status').textContent = '平台未连接'; }
+}
+async function sessions() {
+  const list = await (await fetch('/api/sessions')).json(); $('sessions').innerHTML = '';
+  for (const s of list) { const d = document.createElement('div'); d.className = 's' + (s.id === session ? ' on' : ''); d.textContent = s.title; d.onclick = () => open(s.id); $('sessions').appendChild(d); }
+}
+async function open(id) {
+  if (running) return; session = id; log.innerHTML = '';
+  const s = await (await fetch('/api/session?id=' + encodeURIComponent(id))).json();
+  for (const m of s.messages) {
+    if (m.role === 'user') add('user', m.content);
+    else if (m.role === 'assistant') { if (m.content) add('', m.content); for (const tc of m.tool_calls || []) add('tool', '▶ ' + tc.function.name + ' ' + tc.function.arguments.slice(0, 400)); }
+    else if (m.role === 'tool') add('tool', m.content.slice(0, 600));
+  }
+  Object.assign(T, { input: 0, output: 0, cached: 0, tps: 0, live: false, totalIn: s.totalIn, totalOut: s.totalOut, context: s.promptTokens, window: s.window }); tok();
+  sessions();
+}
+$('new').onclick = () => { if (running) return; session = null; log.innerHTML = ''; Object.assign(T, { input: 0, output: 0, cached: 0, tps: 0, totalIn: 0, totalOut: 0, context: 0, live: false }); tok(); sessions(); $('t').focus(); };
+$('t').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('f').requestSubmit(); } };
+$('f').onsubmit = async e => {
+  e.preventDefault();
+  if (running) { fetch('/api/stop', { method: 'POST' }); return; }
+  const text = $('t').value.trim(); if (!text) return;
+  $('t').value = ''; add('user', text); running = true; $('go').textContent = '停止';
+  const wait = add('note', '思考中…'); let cur = null;
+  try {
+    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session, text }) });
+    if (!res.ok) throw new Error((await res.json()).error);
+    const reader = res.body.getReader(), dec = new TextDecoder(); let buf = '';
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true }); const parts = buf.split('\n\n'); buf = parts.pop();
+      for (const p of parts) {
+        if (!p.startsWith('data: ')) continue; const ev = JSON.parse(p.slice(6)); wait.remove();
+        if (ev.type === 'session') session = ev.id;
+        else if (ev.type === 'delta') { if (ev.text) { if (!cur) cur = add('', ''); cur.textContent += ev.text; log.scrollTop = log.scrollHeight; } T.output = ev.out; T.live = true; tok(); }
+        else if (ev.type === 'usage') { cur = null; Object.assign(T, ev, { live: false }); tok(); }
+        else if (ev.type === 'confirm') confirmCard(ev);
+        else if (ev.type === 'confirmed') { const c = document.getElementById('c-' + ev.id); if (c) { c.querySelectorAll('button').forEach(b => b.disabled = true); c.querySelector('.r').textContent = ev.ok ? '已允许' : '未批准'; } }
+        else if (ev.type === 'tool') add('tool', '▶ ' + ev.name + ' ' + ev.args);
+        else if (ev.type === 'result') add('tool', ev.text);
+        else if (ev.type === 'note') add('note', ev.text);
+        else if (ev.type === 'error') add('note error', '出错：' + ev.text);
+        if (ev.type !== 'done' && ev.type !== 'delta') log.appendChild(wait);
+      }
+    }
+  } catch (err) { add('note error', '出错：' + err.message); }
+  wait.remove(); running = false; $('go').textContent = '发送'; sessions(); status();
+};
+status(); sessions(); setInterval(status, 15000);
+</script>
+</body>
+</html>

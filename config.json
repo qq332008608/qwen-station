@@ -1,0 +1,19 @@
+{
+  "port": 18800,
+  "workspace": "D:\\openclaw\\workspace",
+  "model": {
+    "baseUrl": "http://127.0.0.1:8001",
+    "id": "qwen3.8-27b-gsq-rco",
+    "maxTokens": 8192,
+    "temperature": 0.3,
+    "contextWindow": 184320
+  },
+  "maxToolCallsPerTurn": 25,
+  "toolResultMaxChars": 12000,
+  "comfyPorts": [8188, 8189],
+  "workbench": "http://127.0.0.1:7810",
+  "workbenchLauncher": "E:\\AI电影生成总台\\start_workbench.ps1",
+  "readRoots": ["E:\\视频生成文件", "E:\\AI电影生成总台"],
+  "ffmpegDir": "C:\\Users\\llc33\\AppData\\Local\\Programs\\ffmpeg\\bin",
+  "policyFiles": ["AGENTS.md", "SOUL.md", "IDENTITY.md", "USER.md", "MEMORY.md", "KNOWLEDGE_INDEX.md", "knowledge/workflow-routing.md","knowledge/self-learn/SELF_NOTES.md"]
+}

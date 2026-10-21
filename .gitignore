@@ -1,0 +1,9 @@
+browser-profile/
+models/
+sessions/
+plugins-pending/
+*.log
+*.bak*
+node_modules/
+build/*
+!build/build.cjs

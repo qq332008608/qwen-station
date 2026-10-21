@@ -1,0 +1,118 @@
+{
+ "name": "ninfer",
+ "base": "http://127.0.0.1:8093",
+ "model": "qwen3.8-27b-swift",
+ "at": "2026-10-08T13:54:57.808Z",
+ "tests": [
+  {
+   "t": "热身",
+   "ok": true,
+   "sec": 0.211
+  },
+  {
+   "t": "速度·写作A",
+   "ok": true,
+   "sec": 5.8,
+   "completion": 415,
+   "tokPerSec": 71.4,
+   "chars": 611,
+   "finish": "stop",
+   "head": "梅雨季节的午后，雨丝细密如织，将整条老街笼罩在一层朦胧的水雾中。巷尾那间“时光钟"
+  },
+  {
+   "t": "速度·写作B",
+   "ok": true,
+   "sec": 5,
+   "completion": 359,
+   "tokPerSec": 71.7,
+   "chars": 621,
+   "finish": "stop",
+   "head": "冬日清晨，湖面往往笼罩着一层轻柔的白雾，这看似神秘的自然现象，实则是水与空气在低"
+  },
+  {
+   "t": "工具·读文件",
+   "ok": true,
+   "sec": 0.7,
+   "called": "read_file",
+   "args": {
+    "path": "notes/todo.md"
+   },
+   "reply": ""
+  },
+  {
+   "t": "工具·查队列",
+   "ok": true,
+   "sec": 0.5,
+   "called": "comfy_status",
+   "args": {},
+   "reply": ""
+  },
+  {
+   "t": "工具·联网",
+   "ok": true,
+   "sec": 0.6,
+   "called": "web_search",
+   "args": {
+    "query": "Blender Foundation \"Tears of Steel\" release year"
+   },
+   "reply": ""
+  },
+  {
+   "t": "工具·不该调",
+   "ok": true,
+   "sec": 0.4,
+   "called": null,
+   "args": null,
+   "reply": "51"
+  },
+  {
+   "t": "JSON·分镜",
+   "ok": true,
+   "sec": 1.7,
+   "shots": 3,
+   "tail": "开木匣，从中取出一封泛黄的旧信\",\n      \"end\": \"旧信被取出\"\n    }\n  ]\n}"
+  },
+  {
+   "t": "长文·约6千token·4471",
+   "ok": true,
+   "sec": 3.5,
+   "prompt": 5747,
+   "reply": "青松-4471"
+  },
+  {
+   "t": "长文·约6千token·6038",
+   "ok": true,
+   "sec": 3.5,
+   "prompt": 5751,
+   "reply": "6038"
+  },
+  {
+   "t": "长文·约6千token·冬至后第三天",
+   "ok": true,
+   "sec": 3.5,
+   "prompt": 5748,
+   "reply": "冬至后第三天"
+  },
+  {
+   "t": "长文·约2.5万token·4471",
+   "ok": true,
+   "sec": 18.2,
+   "prompt": 23836,
+   "reply": "青松-4471"
+  },
+  {
+   "t": "长文·约2.5万token·6038",
+   "ok": true,
+   "sec": 18.9,
+   "prompt": 23840,
+   "reply": "6038"
+  },
+  {
+   "t": "长文·约2.5万token·冬至后第三天",
+   "ok": true,
+   "sec": 17.5,
+   "prompt": 23837,
+   "reply": "冬至后第三天"
+  }
+ ]
+}
